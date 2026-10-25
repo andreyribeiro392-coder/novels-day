@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import './detail.css'
+import './player.css'
 
 export const metadata: Metadata = {
   title: 'NOVELS.DAY',
