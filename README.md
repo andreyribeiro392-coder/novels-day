@@ -7,7 +7,7 @@ Site público mobile-first da plataforma NOVELS.DAY.
 - Next.js 15
 - React 19
 - TypeScript
-- Supabase
+- Supabase Auth + PostgreSQL
 - Vercel
 
 ## Conteúdo
@@ -21,7 +21,10 @@ Copie `.env.example` para `.env.local` e preencha:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_CHECKOUT_URL=
 ```
+
+`NEXT_PUBLIC_CHECKOUT_URL` deve ser a URL real do seu checkout quando o gateway de pagamento estiver conectado. Se estiver vazia, o site não inventa uma compra.
 
 Na Vercel, adicione as mesmas variáveis em **Project Settings > Environment Variables**.
 
@@ -38,12 +41,26 @@ Conecte este repositório à Vercel. O framework é detectado automaticamente co
 
 ## Banco
 
-Use o `schema.sql` do repositório `adm-novelsday` para criar as tabelas e políticas no Supabase.
+No repositório `adm-novelsday`, execute no Supabase, nesta ordem:
 
-## Regras atuais
+1. `schema.sql`
+2. `migrations/002_user_library.sql`
 
-- Somente novelas com `status = published` aparecem no site.
-- Somente episódios com `status = published` aparecem.
-- Episódios marcados como `free` abrem no player.
-- Episódios marcados como `premium` permanecem bloqueados até a integração real de assinatura ser conectada.
-- Se o banco estiver vazio, o site exibe estados vazios reais em vez de conteúdo inventado.
+## Funcionalidades reais já preparadas
+
+- catálogo somente com novelas publicadas;
+- páginas individuais de novela;
+- episódios grátis e Premium;
+- login e criação de conta com Supabase Auth;
+- Minha lista baseada em favoritos reais;
+- gravação do progresso de reprodução para usuários autenticados;
+- retomada do vídeo no ponto salvo;
+- busca sobre o catálogo publicado;
+- player real para URLs de vídeo cadastradas;
+- episódios Premium verificam uma assinatura ativa na tabela `subscriptions` antes de reproduzir;
+- página de assinatura preparada para receber uma URL de checkout real;
+- estados vazios quando ainda não existe conteúdo.
+
+## Regra Premium
+
+O site não simula pagamento. O player Premium só libera quando existe uma linha válida em `subscriptions` para o usuário autenticado com `status = active` e período ainda válido. O gateway real deverá criar/atualizar essa informação por webhook em uma etapa posterior.
