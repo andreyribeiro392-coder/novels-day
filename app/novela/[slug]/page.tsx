@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ArrowLeft, LockKeyhole, Play } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { getEpisodes, getSeriesBySlug } from '@/lib/catalog'
+import FavoriteButton from '@/components/FavoriteButton'
 
 export const revalidate = 60
 
@@ -19,7 +20,10 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
           <span className="eyebrow">NOVELS.DAY</span>
           <h1>{series.title}</h1>
           {series.synopsis && <p>{series.synopsis}</p>}
-          {episodes[0] && <Link className="primary-button detail-play" href={`/novela/${series.slug}/episodio/${episodes[0].number}`}><Play size={18} fill="currentColor"/> Começar</Link>}
+          <div className="detail-actions">
+            {episodes[0] && <Link className="primary-button detail-play" href={`/novela/${series.slug}/episodio/${episodes[0].number}`}><Play size={18} fill="currentColor"/> Começar</Link>}
+            <FavoriteButton seriesId={series.id}/>
+          </div>
         </div>
       </section>
 
