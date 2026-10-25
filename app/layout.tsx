@@ -3,6 +3,7 @@ import './globals.css'
 import './detail.css'
 import './player.css'
 import './utility.css'
+import './interactive.css'
 
 export const metadata: Metadata = {
   title: 'NOVELS.DAY',
