@@ -3,6 +3,8 @@ export type Series = {
   slug: string
   title: string
   synopsis: string | null
+  tagline: string | null
+  category: string | null
   cover_url: string | null
   hero_url: string | null
   featured: boolean
@@ -16,8 +18,11 @@ export type Episode = {
   number: number
   title: string
   description: string | null
+  caption: string | null
   video_url: string | null
+  video_path: string | null
   thumbnail_url: string | null
+  subtitle_url: string | null
   duration_seconds: number | null
   access: 'free' | 'premium'
   status: 'draft' | 'published'
