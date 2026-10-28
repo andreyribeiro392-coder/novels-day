@@ -31,18 +31,21 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
         <div className="section-heading"><div><span className="eyebrow">EPISÓDIOS</span><h2>{episodes.length ? 'Temporada atual' : 'Nenhum episódio publicado'}</h2></div></div>
         {episodes.length ? (
           <div className="episode-list">
-            {episodes.map((episode) => (
+            {episodes.map((episode) => {
+              const effectiveAccess = episode.number <= 2 ? 'free' : episode.access
+              return (
               <Link key={episode.id} href={`/novela/${series.slug}/episodio/${episode.number}`} className="episode-card">
                 <div className="episode-thumb" style={episode.thumbnail_url ? { backgroundImage: `url(${episode.thumbnail_url})` } : undefined}>
                   <span className="episode-number">{episode.number}</span>
-                  <span className="episode-play">{episode.access === 'premium' ? <LockKeyhole size={20}/> : <Play size={20} fill="currentColor"/>}</span>
+                  <span className="episode-play">{effectiveAccess === 'premium' ? <LockKeyhole size={20}/> : <Play size={20} fill="currentColor"/>}</span>
                 </div>
                 <div className="episode-copy">
-                  <div className="episode-title-row"><strong>{episode.title}</strong><span>{episode.access === 'premium' ? 'Premium' : 'Grátis'}</span></div>
+                  <div className="episode-title-row"><strong>{episode.title}</strong><span>{effectiveAccess === 'premium' ? 'Premium' : 'Grátis'}</span></div>
                   {episode.description && <p>{episode.description}</p>}
                 </div>
               </Link>
-            ))}
+              )
+            })}
           </div>
         ) : (
           <div className="empty-catalog"><div><strong>Esta novela ainda não tem episódios publicados.</strong><p>Assim que um episódio for publicado no painel, ele aparecerá nesta página.</p></div></div>
@@ -51,3 +54,4 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
     </main>
   )
 }
+

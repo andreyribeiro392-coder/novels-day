@@ -15,6 +15,7 @@ export default async function EpisodePage({ params }: { params: Promise<{ slug: 
   if (!Number.isInteger(episodeNumber) || episodeNumber < 1) notFound()
   const episode = await getEpisode(series.id, episodeNumber)
   if (!episode) notFound()
+  const effectiveAccess = episode.number <= 2 ? 'free' : episode.access
 
   return (
     <main className="player-page vertical-experience">
@@ -25,7 +26,7 @@ export default async function EpisodePage({ params }: { params: Promise<{ slug: 
 
       <EpisodePlayer
         episodeId={episode.id}
-        access={episode.access}
+        access={effectiveAccess}
         videoUrl={episode.video_url}
         videoPath={episode.video_path}
         thumbnailUrl={episode.thumbnail_url}
@@ -36,7 +37,7 @@ export default async function EpisodePage({ params }: { params: Promise<{ slug: 
       <section className="episode-description compact-description">
         <div className="episode-heading-line">
           <div><span className="eyebrow">EPISÓDIO {episode.number}</span><h1>{episode.title}</h1></div>
-          <span className={`access-pill ${episode.access}`}>{episode.access === 'premium' ? 'Premium' : 'Grátis'}</span>
+          <span className={`access-pill ${effectiveAccess}`}>{effectiveAccess === 'premium' ? 'Premium' : 'Grátis'}</span>
         </div>
         {episode.description && <p>{episode.description}</p>}
         {episode.caption && <div className="episode-caption"><span>Legenda / texto</span><p>{episode.caption}</p></div>}
@@ -44,3 +45,4 @@ export default async function EpisodePage({ params }: { params: Promise<{ slug: 
     </main>
   )
 }
+

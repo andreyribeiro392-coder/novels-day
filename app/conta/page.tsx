@@ -1,75 +1,29 @@
 'use client'
 
+import type { User } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { FormEvent, useEffect, useState } from 'react'
-import { ArrowLeft, LogOut, UserRound } from 'lucide-react'
+import { CheckCircle2, Eye, EyeOff, LogOut, MailCheck, ShieldCheck, UserRound } from 'lucide-react'
 import { getBrowserSupabase } from '@/lib/supabase-browser'
 
-const supabase = getBrowserSupabase()
+const supabase=getBrowserSupabase()
+type Mode='login'|'signup'|'reset'
+function friendly(message:string){const v=message.toLowerCase();if(v.includes('invalid login'))return'E-mail ou senha incorretos.';if(v.includes('email not confirmed'))return'Confirme seu e-mail antes de entrar.';if(v.includes('already registered'))return'Este e-mail já possui uma conta.';if(v.includes('password'))return'A senha precisa ter pelo menos 6 caracteres.';return message}
 
-export default function AccountPage() {
-  const [userEmail, setUserEmail] = useState<string | null>(null)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [message, setMessage] = useState('')
-  const [busy, setBusy] = useState(true)
-
-  useEffect(() => {
-    async function boot() {
-      if (!supabase) return setBusy(false)
-      const { data } = await supabase.auth.getSession()
-      setUserEmail(data.session?.user.email ?? null)
-      setBusy(false)
-    }
-    boot()
-    if (!supabase) return
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => setUserEmail(session?.user.email ?? null))
-    return () => data.subscription.unsubscribe()
-  }, [])
-
-  async function signIn(event: FormEvent) {
-    event.preventDefault()
-    if (!supabase) return
-    setBusy(true); setMessage('')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setBusy(false)
-    setMessage(error ? error.message : 'Login realizado com sucesso.')
-  }
-
-  async function signUp() {
-    if (!supabase || !email || !password) return
-    setBusy(true); setMessage('')
-    const { error } = await supabase.auth.signUp({ email, password })
-    setBusy(false)
-    setMessage(error ? error.message : 'Conta criada. Se a confirmação de e-mail estiver ativada no Supabase, confirme sua caixa de entrada.')
-  }
-
-  async function signOut() {
-    if (!supabase) return
-    await supabase.auth.signOut()
-    setUserEmail(null)
-  }
-
-  return (
-    <main className="utility-page">
-      <div className="utility-header">
-        <div className="utility-title"><span className="eyebrow">CONTA</span><h1>Seu acesso</h1><p>Login e cadastro usam diretamente o Supabase Auth.</p></div>
-        <Link href="/" className="back-link"><ArrowLeft size={17}/> Início</Link>
-      </div>
-
-      {!supabase ? <div className="utility-empty">Configure as variáveis do Supabase para ativar contas reais.</div> : userEmail ? (
-        <section className="account-card">
-          <UserRound size={25}/><h2>Conta conectada</h2><p className="utility-message">{userEmail}</p>
-          <button className="text-button" onClick={signOut}><LogOut size={16}/> Sair</button>
-        </section>
-      ) : (
-        <form className="account-card" onSubmit={signIn}>
-          <label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email"/></label>
-          <label>Senha<input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} autoComplete="current-password"/></label>
-          <div className="account-actions"><button className="primary-button" type="submit" disabled={busy}>{busy ? 'Aguarde…' : 'Entrar'}</button><button className="text-button" type="button" disabled={busy} onClick={signUp}>Criar conta</button></div>
-          {message && <div className="utility-message">{message}</div>}
-        </form>
-      )}
-    </main>
-  )
+export default function AccountPage(){
+ const[user,setUser]=useState<User|null>(null),[mode,setMode]=useState<Mode>('login'),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[show,setShow]=useState(false),[accepted,setAccepted]=useState(false),[message,setMessage]=useState(''),[success,setSuccess]=useState(false),[busy,setBusy]=useState(true)
+ useEffect(()=>{async function boot(){if(!supabase)return setBusy(false);const{data}=await supabase.auth.getSession();setUser(data.session?.user??null);setBusy(false)}boot();if(!supabase)return;const{data}=supabase.auth.onAuthStateChange((_e,s)=>setUser(s?.user??null));return()=>data.subscription.unsubscribe()},[])
+ async function submit(e:FormEvent){e.preventDefault();if(!supabase)return;setBusy(true);setMessage('');setSuccess(false)
+  if(mode==='reset'){const{error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:`${window.location.origin}/redefinir-senha`});setBusy(false);setSuccess(!error);setMessage(error?friendly(error.message):'Enviamos o link para redefinir sua senha. Confira também a caixa de spam.');return}
+  if(mode==='signup'){if(!accepted){setBusy(false);setMessage('Aceite os Termos de Uso e a Política de Privacidade para criar a conta.');return}const{error}=await supabase.auth.signUp({email,password,options:{emailRedirectTo:`${window.location.origin}/conta`}});setBusy(false);setSuccess(!error);setMessage(error?friendly(error.message):'Conta criada! Abra seu e-mail e toque no link de confirmação para ativar o acesso.');return}
+  const{error}=await supabase.auth.signInWithPassword({email,password});setBusy(false);setSuccess(!error);setMessage(error?friendly(error.message):'Bem-vindo de volta!')
+ }
+ async function google(){if(!supabase)return;setBusy(true);setMessage('');const{error}=await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:`${window.location.origin}/conta`}});if(error){setBusy(false);setMessage(friendly(error.message))}}
+ async function signOut(){if(!supabase)return;setBusy(true);await supabase.auth.signOut();setUser(null);setBusy(false)}
+ function switchMode(next:Mode){setMode(next);setMessage('');setSuccess(false)}
+ return <main className="utility-page account-page"><div className="utility-title account-heading"><span className="eyebrow">MINHA CONTA</span><h1>{user?'Seu cantinho':mode==='signup'?'Crie sua conta':mode==='reset'?'Recupere seu acesso':'Bem-vindo de volta'}</h1><p>{user?'Continue de onde parou e cuide dos seus dados.':'Entre para salvar novelas, continuar episódios e liberar sua experiência.'}</p></div>
+ {!supabase?<div className="utility-empty">O acesso está temporariamente indisponível.</div>:user?<section className="account-card logged-card"><div className="account-avatar"><UserRound size={27}/></div><span className="eyebrow">CONTA ATIVA</span><h2>{user.user_metadata?.full_name||'Leitor Novels Day'}</h2><p>{user.email}</p><div className={`verification-status ${user.email_confirmed_at?'verified':''}`}>{user.email_confirmed_at?<CheckCircle2 size={18}/>:<MailCheck size={18}/>}<div><strong>{user.email_confirmed_at?'E-mail verificado':'Confirme seu e-mail'}</strong><span>{user.email_confirmed_at?'Sua conta está protegida e pronta para usar.':'Abra a mensagem que enviamos para concluir o cadastro.'}</span></div></div><Link href="/minha-lista" className="primary-button full-button">Abrir minha lista</Link><button className="text-button full-button" onClick={signOut} disabled={busy}><LogOut size={16}/> Sair da conta</button></section>:
+ <section className="account-card auth-card">{mode!=='reset'&&<div className="auth-tabs"><button type="button" className={mode==='login'?'active':''} onClick={()=>switchMode('login')}>Entrar</button><button type="button" className={mode==='signup'?'active':''} onClick={()=>switchMode('signup')}>Criar conta</button></div>}{mode!=='reset'&&<button className="google-button" type="button" onClick={google} disabled={busy}><span>G</span> Continuar com Google</button>}{mode!=='reset'&&<div className="auth-divider"><span>ou use seu e-mail</span></div>}
+ <form onSubmit={submit}><label>E-mail<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required autoComplete="email" placeholder="voce@exemplo.com"/></label>{mode!=='reset'&&<label>Senha<div className="password-field"><input type={show?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)} required minLength={6} autoComplete={mode==='signup'?'new-password':'current-password'} placeholder="Mínimo de 6 caracteres"/><button type="button" aria-label="Mostrar ou ocultar senha" onClick={()=>setShow(v=>!v)}>{show?<EyeOff size={18}/>:<Eye size={18}/>}</button></div></label>}{mode==='signup'&&<label className="terms-check"><input type="checkbox" checked={accepted} onChange={e=>setAccepted(e.target.checked)}/><span>Li e aceito os <Link href="/termos">Termos de Uso</Link> e a <Link href="/privacidade">Política de Privacidade</Link>.</span></label>}<button className="primary-button full-button auth-submit" type="submit" disabled={busy}>{busy?'Aguarde…':mode==='login'?'Entrar na minha conta':mode==='signup'?'Criar minha conta':'Enviar link de recuperação'}</button></form>
+ {mode==='login'&&<button className="forgot-link" type="button" onClick={()=>switchMode('reset')}>Esqueci minha senha</button>}{mode==='reset'&&<button className="forgot-link" type="button" onClick={()=>switchMode('login')}>Voltar para o login</button>}{message&&<div className={`auth-message ${success?'success':'error'}`}>{message}</div>}<div className="security-note"><ShieldCheck size={17}/><span>Seus dados de acesso são protegidos pelo Supabase Auth.</span></div><p className="legal-note">Ao continuar com o Google, você concorda com nossos <Link href="/termos">Termos</Link> e <Link href="/privacidade">Privacidade</Link>.</p></section>}</main>
 }
